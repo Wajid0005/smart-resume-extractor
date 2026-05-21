@@ -11,7 +11,7 @@ def get_github_profile(username):
     return response.json()
 
 def get_user_repositories(username):
-    url = f"https://api.github.com/users/{username}/repos"
+    url = f"https://api.github.com/users/{username}/repos?per_page=100&sort=updated"
 
     response = requests.get(url)
 
