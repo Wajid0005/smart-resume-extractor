@@ -1,4 +1,6 @@
-const API_URL = "https://smart-resume-extractor-production.up.railway.app";
+const API_URL = window.location.origin.startsWith('http') 
+    ? window.location.origin 
+    : "https://smart-resume-extractor-production.up.railway.app";
 
 let currentUser = "";
 let allRepos = [];

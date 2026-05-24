@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.services.analyzer_service import extract_repo_data
@@ -84,3 +85,5 @@ def match_job(request: JobMatchRequest):
     )
 
     return result
+
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
