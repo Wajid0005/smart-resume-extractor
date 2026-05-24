@@ -27,12 +27,7 @@ class JobMatchRequest(BaseModel):
     username: str
     job_description: str
 
-@app.get("/")
-def home():
 
-    return {
-        "message": "Smart Github Resume Extractor API"
-    }
 
 @app.get("/analyze-repo")
 def analyze_repo(username: str, repo_name: str):
