@@ -9,8 +9,10 @@ env_path = Path(__file__).resolve().parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 
+# Prevent startup crashes on platforms like Railway if GROQ_API_KEY is not yet configured
+api_key = os.getenv("GROQ_API_KEY") or "placeholder_key"
 client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=api_key
 )
 
 def generate_summary(repo_data):
