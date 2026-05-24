@@ -80,6 +80,8 @@ smart-github-resume-extractor/
 ├── tests/
 ├── .env
 ├── .gitignore
+├── Procfile
+├── railway.json
 └── requirements.txt
 ```
 
@@ -135,14 +137,57 @@ smart-github-resume-extractor/
 
 | Method | Route | Description |
 |---|---|---|
-| `GET` | `/` | API status route |
+| `GET` | `/` | Serves the unified frontend index.html page |
 | `GET` | `/profile-summary` | Returns AI-generated developer analysis & repository list |
 | `GET` | `/analyze-repo` | Returns detailed repository intelligence |
 | `POST` | `/match-job` | Returns job compatibility analysis from a Pydantic payload |
 
 ---
 
+## 🚀 Unified Production Cloud Deployment (Railway)
+
+The application is engineered to deploy as a **single, consolidated service** on Railway. The frontend is served directly by the FastAPI backend, eliminating the friction of managing separate hosting platforms and handling cross-origin CORS settings in production.
+
+### 🛡️ Critical Deployment Engineering & Bug Fixes
+
+During the Railway deployment pipeline, several advanced real-world bugs were identified and fixed to ensure a completely seamless build and zero-downtime runtime environment:
+
+#### 1. Startup Command Resolution (`railway.json` & `Procfile`)
+*   **The Issue:** Railway's auto-builder (**Railpack/Nixpacks**) expects a Python entrypoint at the root `main.py`. Because our entrypoint is located at `app/main.py`, the builder failed to auto-detect a start command and aborted the build.
+*   **The Fix:** Configured a modern `railway.json` and a Heroku-compatible `Procfile` at the project root to explicitly tell the container runner to boot via:
+    ```bash
+    uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+    ```
+
+#### 2. Startup Import-Time Crash Safeguard
+*   **The Issue:** The Groq client was initialized immediately at the module level in `ai_service.py`. If `GROQ_API_KEY` was missing or unconfigured in Railway's service settings at startup, the client threw a fatal error during Python's import phase, completely crashing the Uvicorn bootloader.
+*   **The Fix:** Safeguarded initialization by fallback-defaulting to a placeholder key (`os.getenv("GROQ_API_KEY") or "placeholder_key"`). The server now boots flawlessly under all circumstances, and gracefully requests API Key configuration only at the exact moment AI features are invoked.
+
+#### 3. Consolidated FastAPI Static Serving & Mount Order
+*   **The Issue:** To run as a single container, the backend was updated to mount the frontend static directory using `StaticFiles`. However, a conflicting `@app.get("/")` route on the main router was capturing root requests, preventing the homepage (`index.html`) from loading.
+*   **The Fix:** Removed the conflicting root route and mounted the frontend directory with `html=True` as the final route in `app/main.py`. Specific routes match first, while general static requests successfully fall through to serve the UI.
+
+#### 4. Async File I/O Runtime Dependency (`aiofiles`)
+*   **The Issue:** FastAPI's `StaticFiles` requires `aiofiles` to handle non-blocking asynchronous file operations. Without it, the application threw a 500 error at runtime when trying to serve static CSS or JS assets.
+*   **The Fix:** Appended `aiofiles` to `requirements.txt` to ensure Railway installs it automatically during the build process.
+
+#### 5. Dynamic Origin Client Resolution
+*   **The Issue:** The client was hardcoded to a static backend domain. If deployed to a different Railway subdomain or run locally, the API calls failed.
+*   **The Fix:** Configured `frontend/script.js` to dynamically determine the API endpoint via `window.location.origin`, falling back gracefully to the production API if opened directly as a file.
+
+#### 6. Bubble-Up Error Diagnostics
+*   **The Issue:** Client-side fetch alerts hid the raw HTTP error payload, showing generic "Failed to fetch" alerts.
+*   **The Fix:** Upgraded both backend exceptions and frontend fetch parsers to bubble up detailed system details (e.g. telling the user *exactly* how to configure `GROQ_API_KEY` in their Railway panel).
+
+---
+
 ## 🐞 Major Bugs Fixed
+- [x] Railpack/Nixpacks startup command failures (solved via `railway.json` and `Procfile`)
+- [x] Module import-time startup crashes due to unconfigured API keys
+- [x] Missing async I/O dependency `aiofiles` causing static serving crashes
+- [x] Conflicting root route blocking static `index.html` loading
+- [x] Dynamic backend URL resolution for seamless local/cloud switches
+- [x] Detailed API exception bubble-ups to the frontend client UI
 - [x] `.env` loading problems and Groq API key errors
 - [x] Invalid JSON parsing & Broken AI responses
 - [x] CORS issues and Frontend fetch failures
@@ -178,7 +223,7 @@ The main backend intelligence system is largely complete. Current focus is shift
 | **Job Match Engine** | ✅ Complete |
 | **Frontend Logic** | ✅ Complete |
 | **UI/UX Polish** | 🟡 In Progress |
-| **Deployment** | ❌ Pending |
+| **Deployment** | ✅ Complete (Railway) |
 | **Authentication** | ❌ Pending |
 | **Database** | ❌ Pending |
 
