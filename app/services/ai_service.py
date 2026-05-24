@@ -3,17 +3,43 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 import json
+from fastapi import HTTPException
 
 env_path = Path(__file__).resolve().parent.parent.parent / ".env"
 
 load_dotenv(dotenv_path=env_path)
-
 
 # Prevent startup crashes on platforms like Railway if GROQ_API_KEY is not yet configured
 api_key = os.getenv("GROQ_API_KEY") or "placeholder_key"
 client = Groq(
     api_key=api_key
 )
+
+def call_groq(prompt, temperature=0.3, response_format=None):
+    if api_key == "placeholder_key":
+        raise HTTPException(
+            status_code=500,
+            detail="GROQ_API_KEY environment variable is not configured. Please add GROQ_API_KEY to your Railway service variables."
+        )
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            response_format=response_format or {"type": "text"},
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        err_str = str(e)
+        if "api_key" in err_str or "401" in err_str or "unauthorized" in err_str.lower():
+            raise HTTPException(
+                status_code=500,
+                detail="GROQ_API_KEY is invalid or unauthorized. Please verify your Groq API key in your Railway service variables."
+            )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Groq AI error: {err_str}"
+        )
 
 def generate_summary(repo_data):
     prompt = f"""
@@ -65,27 +91,8 @@ def generate_summary(repo_data):
     {repo_data}
     """
 
-    response = client.chat.completions.create(
-
-        model="llama-3.3-70b-versatile",
-
-        response_format={
-            "type": "json_object"
-        },
-
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-
-        temperature=0.5
-    )
-
-    return json.loads(
-        response.choices[0].message.content
-    )
+    content = call_groq(prompt, temperature=0.5, response_format={"type": "json_object"})
+    return json.loads(content)
 
 def analyze_readme(readme_content):
 
@@ -115,27 +122,8 @@ def analyze_readme(readme_content):
     {readme_content}
     """
 
-    response = client.chat.completions.create(
-
-        model="llama-3.3-70b-versatile",
-
-        response_format={
-            "type":"json_object"
-        },
-
-        messages=[
-            {
-                "role":"user",
-                "content":prompt
-            }
-        ],
-
-        temperature=0.3
-    )
-
-    return json.loads(
-        response.choices[0].message.content
-    )
+    content = call_groq(prompt, temperature=0.3, response_format={"type": "json_object"})
+    return json.loads(content)
 
 def match_job_description(
     username,
@@ -201,24 +189,5 @@ def match_job_description(
     {job_description}
     """
 
-    response = client.chat.completions.create(
-
-        model="llama-3.3-70b-versatile",
-
-        response_format={
-            "type": "json_object"
-        },
-
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-
-        temperature=0.3
-    )
-
-    return json.loads(
-        response.choices[0].message.content
-    )
+    content = call_groq(prompt, temperature=0.3, response_format={"type": "json_object"})
+    return json.loads(content)

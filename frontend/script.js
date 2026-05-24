@@ -31,7 +31,10 @@ async function fetchProfile() {
     
     try {
         const response = await fetch(`${API_URL}/profile-summary?username=${currentUser}`);
-        if (!response.ok) throw new Error("Failed to fetch profile");
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to fetch profile");
+        }
         const data = await response.json();
         
         populateProfile(data);
@@ -136,6 +139,10 @@ async function openDetail(row, repoName, lang) {
     
     try {
         const response = await fetch(`${API_URL}/analyze-repo?username=${currentUser}&repo_name=${repoName}`);
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to analyze repo");
+        }
         const data = await response.json();
         
         const analysis = data.analysis;
@@ -191,6 +198,11 @@ async function runJobMatch() {
                 job_description: jdText
             })
         });
+        
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to match job");
+        }
         
         const data = await response.json();
         renderJobMatch(data);
