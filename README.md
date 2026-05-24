@@ -11,6 +11,12 @@
     <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3" />
     <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
   </p>
+
+  <p>
+    <a href="https://smart-resume-extractor-production.up.railway.app/">
+      <img src="https://img.shields.io/badge/Live%20Demo-Railway-009688?style=for-the-badge&logo=railway&logoColor=white" alt="Live Demo" />
+    </a>
+  </p>
 </div>
 
 ---
@@ -147,6 +153,8 @@ smart-github-resume-extractor/
 ## 🚀 Unified Production Cloud Deployment (Railway)
 
 The application is engineered to deploy as a **single, consolidated service** on Railway. The frontend is served directly by the FastAPI backend, eliminating the friction of managing separate hosting platforms and handling cross-origin CORS settings in production.
+
+🔗 **Live Production URL:** [https://smart-resume-extractor-production.up.railway.app](https://smart-resume-extractor-production.up.railway.app)
 
 ### 🛡️ Critical Deployment Engineering & Bug Fixes
 
